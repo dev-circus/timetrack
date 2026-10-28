@@ -2,7 +2,7 @@
 """
 timetrack – Multi-project terminal time tracking
 Norton Commander style TUI – ↑↓ Navigate  n New  s/p/r/e Actions  q Quit
-Created by pxtrickBhxttrick — dev_circus | www.dev-circus.com
+Created by Patrick B. Stang — dev_circus | www.dev-circus.com
 """
 
 import csv

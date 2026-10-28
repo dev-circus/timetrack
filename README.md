@@ -96,4 +96,4 @@ Open in Excel, Numbers, or any CSV viewer to analyze your tracked time.
 
 ## License
 
-MIT — © 2026 pxtrickBhxttrick — dev_circus · [www.dev-circus.com](https://www.dev-circus.com)
+MIT — © 2026 Patrick B. Stang — dev_circus · [www.dev-circus.com](https://www.dev-circus.com)
