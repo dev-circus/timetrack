@@ -10,7 +10,7 @@ One shared core (state + log) drives three frontends:
 - **CLI** — `timetrack start | pause | resume | stop | status | log | summary | projects | migrate`
 - **MCP server** for Claude — `timetrack-mcp`
 
-The project is detected from the Git repo of the working directory. Sessions survive closing the terminal, and the TUI shows live what was started from the CLI or by Claude.
+The project is detected from the Git repo of the working directory, or from the folder name if there is none. Sessions survive closing the terminal, and the TUI shows live what was started from the CLI or by Claude.
 
 ## Features
 
