@@ -16,6 +16,7 @@ import termios
 import tty
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from itertools import groupby
 from typing import Callable, Optional
 
 from rich import box
@@ -62,7 +63,8 @@ def big(text: str) -> list[str]:
 
 def big_text(text: str, color: str) -> list[Text]:
     """Gefüllte Pixel als Leerzeichen mit Hintergrundfarbe: solide, unabhängig vom Zeilenabstand."""
-    return [Text.assemble(*[(" ", f"on {color}" if c == "█" else st(color)) for c in row]) for row in big(text)]
+    return [Text.assemble(*[(" " * len(list(run)), f"on {color}" if c == "█" else st(color)) for c, run in groupby(row)])
+            for row in big(text)]
 
 
 # ── Tastatur ──────────────────────────────────────────────────────────────────
@@ -490,9 +492,10 @@ def keybar(app: App, width: int) -> Text:
                  ("e", "End", bool(s)), ("l", "Log", True), ("x", "Remove", has), ("q", "Quit", True)]
     seg = max(8, width // len(items))
     bar = Text()
-    for key, label, on in items:
+    for i, (key, label, on) in enumerate(items):
+        room = (width - seg * (len(items) - 1) if i == len(items) - 1 else seg) - len(key)
         bar.append(key, style=f"bold {TXT} on #000000")
-        bar.append(label.ljust(seg - len(key))[:seg - len(key)], style=st("#000000", True, SEL) if on else st(DIM))
+        bar.append(label.ljust(room)[:room], style=st("#000000", True, SEL) if on else st(DIM))
     bar.append(" " * max(0, width - len(bar.plain)), style=st(DIM))
     return bar
 
