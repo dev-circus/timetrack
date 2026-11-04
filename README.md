@@ -1,61 +1,79 @@
 # timetrack
 
-Projektbezogene Zeiterfassung im Terminal. Ein gemeinsamer Core (State + Log), darauf drei Frontends:
+Project-based time tracking for the terminal — and for Claude.
 
-- **TUI** im Norton-Commander-Look (`timetrack`)
-- **CLI** (`timetrack start|pause|resume|stop|status|log|summary|projects|migrate`)
-- **MCP-Server** für Claude (`timetrack-mcp`)
+![timetrack TUI in Norton Commander style](docs/screenshot.png)
 
-Das Projekt wird aus dem Git-Repo des Arbeitsverzeichnisses erkannt. Sessions überleben das Schließen
-des Terminals: Die TUI zeigt live, was per CLI oder Claude gestartet wurde.
+One shared core (state + log) drives three frontends:
 
-## Setup
+- **TUI** in Norton Commander style — `timetrack`
+- **CLI** — `timetrack start | pause | resume | stop | status | log | summary | projects | migrate`
+- **MCP server** for Claude — `timetrack-mcp`
+
+The project is detected from the Git repo of the working directory. Sessions survive closing the terminal, and the TUI shows live what was started from the CLI or by Claude.
+
+## Features
+
+- **Per-project sessions** — starting one project pauses the running one automatically
+- **Active vs. paused time** — logged separately, `duration_min` is active time only
+- **Retroactive end** — forgot to stop? `timetrack stop --at 17:30`
+- **Persistent state** — sessions live in `state.json` (file lock, atomic writes), not in the terminal
+- **Local only** — everything stays on your machine, the log is a plain CSV
+- **Claude integration** — an MCP server that starts, pauses and stops the clock per Git repo, on request
+
+## Install
+
+Requires macOS or Linux and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-brew install uv
-uv tool install /Users/patrick/Dev/timetrack   # legt timetrack und timetrack-mcp in ~/.local/bin ab
-timetrack migrate --dry-run                      # alte Logs prüfen, dann ohne --dry-run
+git clone https://github.com/dev-circus/timetrack.git
+cd timetrack
+uv tool install .          # puts timetrack and timetrack-mcp on your PATH
 ```
 
-Nach Code-Änderungen neu installieren: `uv tool install --reinstall /Users/patrick/Dev/timetrack`.
-Liegt ein altes `~/bin/timetrack` im PATH vor `~/.local/bin`, gewinnt dieses.
+After code changes: `uv tool install --reinstall .`
 
 ## TUI
 
-`n` neues Projekt · `s`/`↵` Start · `p` Pause · `r` Resume · `e` Ende (mit Notiz) · `l` Log-Manager · `x` Projekt entfernen · `q` Quit
-
-Im Log-Manager: `↑↓` bewegen, `d` löschen (Bestätigung mit `y`).
+| Key | Action |
+|-----|--------|
+| `↑` `↓` | Select project |
+| `n` | New project (defaults to the current Git repo) |
+| `s` / `↵` | Start (`↵` toggles start / pause / resume) |
+| `p` · `r` | Pause · Resume |
+| `e` | End session, with an optional note |
+| `l` | Log manager (`↑↓` move, `d` delete, `q` back) |
+| `x` | Remove project from the list (log stays) |
+| `q` | Quit — running sessions keep running |
 
 ## Claude (MCP)
 
 ```bash
-claude mcp add --scope user timetrack -- /Users/patrick/.local/bin/timetrack-mcp
+claude mcp add --scope user timetrack -- "$(command -v timetrack-mcp)"
 ```
 
-Tools: `status`, `start`, `pause`, `resume`, `stop` (mit `note` und nachträglichem `at`), `log`, `summary`, `projects`.
-Claude startet und stoppt die Zeit nur auf Zuruf. Das Arbeitsverzeichnis wird als `cwd` übergeben.
+Tools: `status`, `start`, `pause`, `resume`, `stop` (with `note` and retroactive `at`), `log`, `summary`, `projects`.
 
-## Daten
+Claude starts and stops the clock only when you ask it to. It passes the session's working directory as `cwd`, so the project follows the repo you are working in.
 
-Standard: `~/.timetrack/` (überschreibbar mit `TIMETRACK_HOME`).
+## Data
 
-| Datei | Inhalt |
-|---|---|
-| `state.json` | Projekte und offene Sessions (flock + atomarer Write) |
+Default location is `~/.timetrack/` (override with `TIMETRACK_HOME`).
+
+| File | Content |
+|------|---------|
+| `state.json` | Projects and open sessions |
 | `log.csv` | `date,project,repo,branch,start,end,duration_min,note,paused_min` |
 
-`duration_min` ist die **Aktivzeit ohne Pausen**, `paused_min` die Pausenzeit. Einträge vor v0.1 haben keine
-Pausenangabe und enthalten die Bruttozeit.
+Coming from v3 (single file, log in `~/timetrack/log.csv`)? Run `timetrack migrate --dry-run`, then `timetrack migrate`. It merges the old log with a backup and leaves the source untouched. Entries from v3 have no pause information and contain gross time.
 
-## Entwicklung
+## Development
 
 ```bash
 uv sync
 uv run pytest
 ```
 
-`legacy/timetrack-v3.py` ist die alte Einzeldatei-Version (nur Archiv).
+## License
 
----
-
-© 2026 dev_circus · www.dev-circus.com · by Patrick B. Stang
+MIT — © 2026 dev_circus · [www.dev-circus.com](https://www.dev-circus.com) · by Patrick B. Stang
