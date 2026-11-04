@@ -56,6 +56,19 @@ def test_mcp_roundtrip_ueber_stdio(tmp_path):
                 err = await call("stop")
                 assert err.is_error and "Keine aktive Session" in err.content[0].text
 
+                # Ordner ohne Repo: Ordnername wird Projekt, kein Repo im Log
+                plain = tmp_path / "Studium"
+                plain.mkdir()
+                assert _payload(await call("start", cwd=str(plain)))["project"] == "Studium"
+                assert _payload(await call("stop", cwd=str(plain)))["repo"] == ""
+
+                # Home ohne `project`: Fehler mit Handlungsanweisung; mit Namen läuft es
+                no_dir = await s.call_tool("start", {"cwd": str(fake_home)})
+                assert no_dir.is_error and "`project`" in no_dir.content[0].text
+                named = _payload(await call("start", project="Netcup Server", cwd=str(fake_home)))
+                assert named["project"] == "Netcup Server"
+                assert _payload(await call("stop", project="Netcup Server", cwd=str(fake_home)))["repo"] == ""
+
                 guard = await s.call_tool("status", {"cwd": str(fake_home)})
                 assert guard.is_error and "Kein Projekt erkannt" in guard.content[0].text
 

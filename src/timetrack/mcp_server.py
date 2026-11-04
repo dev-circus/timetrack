@@ -1,7 +1,7 @@
 """timetrack MCP-Server – projektbezogene Zeiterfassung für Claude.
 
-Das Projekt wird aus dem Git-Repo des Arbeitsverzeichnisses erkannt (cwd des Servers,
-überschreibbar per `cwd`/`project`). State und Log teilt sich der Server mit CLI und TUI.
+Das Projekt wird aus dem Git-Repo des Arbeitsverzeichnisses erkannt, sonst aus dem Ordnernamen
+(cwd des Servers, überschreibbar per `cwd`/`project`). State und Log teilt sich der Server mit CLI und TUI.
 
 © 2026 dev_circus · www.dev-circus.com · by Patrick B. Stang
 """
@@ -19,10 +19,13 @@ from . import core
 from .core import ProjectInfo, TimetrackError
 
 INSTRUCTIONS = (
-    "Projektbezogene Zeiterfassung. Das Projekt ergibt sich aus dem Git-Repo des "
-    "Arbeitsverzeichnisses: übergib bei jedem Tool-Aufruf das Arbeitsverzeichnis der aktuellen "
-    "Session als `cwd`. Zeit nur auf ausdrücklichen Wunsch des Users starten, pausieren, "
-    "fortsetzen oder stoppen, niemals eigenmächtig. Bei Unsicherheit zuerst `status` aufrufen."
+    "Projektbezogene Zeiterfassung, auch für Arbeit ohne Git-Repo. Das Projekt ergibt sich aus dem "
+    "Arbeitsverzeichnis: Git-Repo, sonst Ordnername. Übergib bei jedem Tool-Aufruf das "
+    "Arbeitsverzeichnis der aktuellen Session als `cwd`. Gibt es kein sinnvolles Verzeichnis (Home, `/`, "
+    "Chat ohne Ordner) oder soll die Zeit unter anderem Namen laufen, frag den User nach dem "
+    "Projektnamen und übergib ihn als `project`; neue Projekte entstehen beim ersten `start`. "
+    "Zeit nur auf ausdrücklichen Wunsch des Users starten, pausieren, fortsetzen oder stoppen, "
+    "niemals eigenmächtig. Bei Unsicherheit zuerst `status` aufrufen."
 )
 
 mcp = MCPServer("timetrack", instructions=INSTRUCTIONS)
@@ -62,7 +65,7 @@ def _view(s: dict) -> dict:
 
 @tool(READ)
 def status(project: Optional[str] = None, cwd: Optional[str] = None) -> dict:
-    """Zeigt die Session des aktuellen Projekts (aus dem Git-Repo) und alle anderen offenen Sessions."""
+    """Zeigt die Session des aktuellen Projekts (Git-Repo, sonst Ordnername oder `project`) und alle anderen offenen Sessions."""
     name = _name(project, cwd)
     sessions = core.snapshot()["sessions"]
     return {
@@ -74,7 +77,8 @@ def status(project: Optional[str] = None, cwd: Optional[str] = None) -> dict:
 
 @tool(WRITE)
 def start(note: str = "", project: Optional[str] = None, cwd: Optional[str] = None) -> dict:
-    """Startet die Zeiterfassung für das aktuelle Projekt. Ein anderes laufendes Projekt wird automatisch pausiert."""
+    """Startet die Zeiterfassung für das aktuelle Projekt (Git-Repo, sonst Ordnername oder `project`, auch ohne Repo).
+    Ein anderes laufendes Projekt wird automatisch pausiert."""
     info = _info(project, cwd)
     r = core.start(info.name, info=info, note=note)
     msg = f"Zeiterfassung für '{info.name}' gestartet."

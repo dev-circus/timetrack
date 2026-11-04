@@ -153,3 +153,24 @@ def test_summary_perioden():
     assert s["total_min"] == 150.0 and s["by_project"][0]["project"] == "beta"
     with pytest.raises(TimetrackError):
         core.summary("jahr")
+
+
+def test_projekt_ohne_repo_nutzt_ordnernamen(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    notes = tmp_path / "Obsidian Vault"
+    notes.mkdir()
+    info = core.resolve_project(cwd=str(notes))
+    assert (info.name, info.repo, info.branch) == ("Obsidian Vault", None, None)
+    core.start(info.name, info=info, now=T0)
+    e = core.stop(info.name, now=T0 + 10 * MIN)
+    assert e["project"] == "Obsidian Vault" and e["repo"] == ""
+
+
+def test_home_braucht_projektnamen(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    assert core.is_generic_dir(core.detect_project(str(home)))
+    with pytest.raises(TimetrackError, match="`project`"):
+        core.resolve_project(cwd=str(home))
+    assert core.resolve_project("Studium", str(home)).name == "Studium"

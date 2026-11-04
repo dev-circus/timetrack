@@ -529,8 +529,9 @@ def run(console: Optional[Console] = None) -> None:
         raise TimetrackError("Die TUI braucht ein Terminal.")
     app = App()
     info = core.detect_project()
+    if not core.is_generic_dir(info):
+        app.detected = info  # Vorschlag für `n`: Repo oder Ordnername
     if info.repo:
-        app.detected = info
         try:
             if info.name not in [p["name"] for p in core.snapshot()["projects"]]:
                 core.add_project(info)

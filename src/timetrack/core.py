@@ -76,14 +76,20 @@ def detect_project(path: Optional[str] = None) -> ProjectInfo:
     return ProjectInfo(cwd.name or str(cwd), None, None, str(cwd))
 
 
+def is_generic_dir(info: ProjectInfo) -> bool:
+    """Home und / ergeben keinen brauchbaren Projektnamen."""
+    return info.repo is None and Path(info.path or "/") in (Path.home(), Path("/"))
+
+
 def resolve_project(project: Optional[str] = None, cwd: Optional[str] = None) -> ProjectInfo:
-    """Projekt für CLI/MCP: explizit benannt oder aus cwd. Home und / sind kein Projekt."""
+    """Projekt für CLI/MCP: explizit benannt, sonst Git-Repo, sonst Ordnername."""
     info = detect_project(cwd)
     if project:
         info.name = project
-    elif info.repo is None and Path(info.path or "/") in (Path.home(), Path("/")):
+    elif is_generic_dir(info):
         raise TimetrackError(
-            "Kein Projekt erkannt (Arbeitsverzeichnis ist kein Git-Repo). Projekt oder cwd angeben."
+            "Kein Projekt erkannt: Das Arbeitsverzeichnis ist Home oder /. Frag den User nach einem "
+            "Projektnamen und übergib ihn als `project` (CLI: -p NAME). Das Projekt entsteht beim ersten start."
         )
     return info
 

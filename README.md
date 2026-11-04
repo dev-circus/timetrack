@@ -17,6 +17,7 @@ The project is detected from the Git repo of the working directory. Sessions sur
 - **Per-project sessions** — starting one project pauses the running one automatically
 - **Active vs. paused time** — logged separately, `duration_min` is active time only
 - **Retroactive end** — forgot to stop? `timetrack stop --at 17:30`
+- **Works without Git** — outside a repo the folder name is the project; for Home or anything else give a name: `timetrack start -p "Reading"`
 - **Persistent state** — sessions live in `state.json` (file lock, atomic writes), not in the terminal
 - **Local only** — everything stays on your machine, the log is a plain CSV
 - **Claude integration** — an MCP server that starts, pauses and stops the clock per Git repo, on request
@@ -54,7 +55,7 @@ claude mcp add --scope user timetrack -- "$(command -v timetrack-mcp)"
 
 Tools: `status`, `start`, `pause`, `resume`, `stop` (with `note` and retroactive `at`), `log`, `summary`, `projects`.
 
-Claude starts and stops the clock only when you ask it to. It passes the session's working directory as `cwd`, so the project follows the repo you are working in.
+Claude starts and stops the clock only when you ask it to. It passes the session's working directory as `cwd`, so the project follows the repo (or folder) you are working in. Without a usable folder (Home, `/`, a chat), Claude asks you for a project name and passes it as `project`; new projects are created on the first `start`.
 
 ## Data
 
