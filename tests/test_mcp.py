@@ -18,10 +18,12 @@ def test_mcp_roundtrip_ueber_stdio(tmp_path):
     repo = tmp_path / "demo-repo"
     repo.mkdir()
     subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
+    fake_home = tmp_path / "home"
+    fake_home.mkdir()
     params = StdioServerParameters(
         command=sys.executable,
         args=["-m", "timetrack.mcp_server"],
-        env={**os.environ, "TIMETRACK_HOME": str(tmp_path / "tt")},
+        env={**os.environ, "TIMETRACK_HOME": str(tmp_path / "tt"), "HOME": str(fake_home)},
         cwd=repo,
     )
 
@@ -52,6 +54,9 @@ def test_mcp_roundtrip_ueber_stdio(tmp_path):
                 assert _payload(await call("summary", period="today"))["by_project"][0]["project"] == "demo-repo"
 
                 err = await call("stop")
-                assert err.is_error
+                assert err.is_error and "Keine aktive Session" in err.content[0].text
+
+                guard = await s.call_tool("status", {"cwd": str(fake_home)})
+                assert guard.is_error and "Kein Projekt erkannt" in guard.content[0].text
 
     asyncio.run(run())

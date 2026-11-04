@@ -17,6 +17,9 @@ uv tool install /Users/patrick/Dev/timetrack   # legt timetrack und timetrack-mc
 timetrack migrate --dry-run                      # alte Logs prüfen, dann ohne --dry-run
 ```
 
+Nach Code-Änderungen neu installieren: `uv tool install --reinstall /Users/patrick/Dev/timetrack`.
+Liegt ein altes `~/bin/timetrack` im PATH vor `~/.local/bin`, gewinnt dieses.
+
 ## TUI
 
 `n` neues Projekt · `s`/`↵` Start · `p` Pause · `r` Resume · `e` Ende (mit Notiz) · `l` Log-Manager · `x` Projekt entfernen · `q` Quit

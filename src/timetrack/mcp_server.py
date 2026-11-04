@@ -8,13 +8,15 @@ Das Projekt wird aus dem Git-Repo des Arbeitsverzeichnisses erkannt (cwd des Ser
 
 from __future__ import annotations
 
+from functools import wraps
 from typing import Optional
 
 from mcp.server.mcpserver import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ToolAnnotations
 
 from . import core
-from .core import ProjectInfo
+from .core import ProjectInfo, TimetrackError
 
 INSTRUCTIONS = (
     "Projektbezogene Zeiterfassung. Das Projekt ergibt sich aus dem Git-Repo des "
@@ -27,6 +29,19 @@ mcp = MCPServer("timetrack", instructions=INSTRUCTIONS)
 
 READ = ToolAnnotations(readOnlyHint=True)
 WRITE = ToolAnnotations(readOnlyHint=False, destructiveHint=False)
+
+
+def tool(annotations: ToolAnnotations):
+    """Tool registrieren. Erwartete Fehler gehen als ToolError raus, sonst verschluckt das SDK den Text."""
+    def register(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            try:
+                return fn(*args, **kwargs)
+            except TimetrackError as e:
+                raise ToolError(str(e)) from e
+        return mcp.tool(annotations=annotations)(wrapper)
+    return register
 
 
 def _info(project: Optional[str], cwd: Optional[str]) -> ProjectInfo:
@@ -45,7 +60,7 @@ def _view(s: dict) -> dict:
     }
 
 
-@mcp.tool(annotations=READ)
+@tool(READ)
 def status(project: Optional[str] = None, cwd: Optional[str] = None) -> dict:
     """Zeigt die Session des aktuellen Projekts (aus dem Git-Repo) und alle anderen offenen Sessions."""
     name = _name(project, cwd)
@@ -57,7 +72,7 @@ def status(project: Optional[str] = None, cwd: Optional[str] = None) -> dict:
     }
 
 
-@mcp.tool(annotations=WRITE)
+@tool(WRITE)
 def start(note: str = "", project: Optional[str] = None, cwd: Optional[str] = None) -> dict:
     """Startet die Zeiterfassung für das aktuelle Projekt. Ein anderes laufendes Projekt wird automatisch pausiert."""
     info = _info(project, cwd)
@@ -68,7 +83,7 @@ def start(note: str = "", project: Optional[str] = None, cwd: Optional[str] = No
     return {**r, "message": msg}
 
 
-@mcp.tool(annotations=WRITE)
+@tool(WRITE)
 def pause(project: Optional[str] = None, cwd: Optional[str] = None) -> dict:
     """Pausiert die laufende Session des aktuellen Projekts."""
     name = _name(project, cwd)
@@ -76,7 +91,7 @@ def pause(project: Optional[str] = None, cwd: Optional[str] = None) -> dict:
     return {**r, "message": f"'{name}' pausiert bei {core.fmt_hms(r['active_sec'])} aktiv."}
 
 
-@mcp.tool(annotations=WRITE)
+@tool(WRITE)
 def resume(project: Optional[str] = None, cwd: Optional[str] = None) -> dict:
     """Setzt die pausierte Session fort. Ein anderes laufendes Projekt wird automatisch pausiert."""
     name = _name(project, cwd)
@@ -87,7 +102,7 @@ def resume(project: Optional[str] = None, cwd: Optional[str] = None) -> dict:
     return {**r, "message": msg}
 
 
-@mcp.tool(annotations=WRITE)
+@tool(WRITE)
 def stop(note: Optional[str] = None, at: Optional[str] = None,
          project: Optional[str] = None, cwd: Optional[str] = None) -> dict:
     """Beendet die Session und schreibt sie ins Log (Aktivzeit ohne Pausen).
@@ -99,7 +114,7 @@ def stop(note: Optional[str] = None, at: Optional[str] = None,
     return {**e, "message": msg}
 
 
-@mcp.tool(annotations=READ)
+@tool(READ)
 def log(limit: int = 10, project: Optional[str] = None, cwd: Optional[str] = None,
         all_projects: bool = False) -> dict:
     """Letzte Log-Einträge, standardmäßig nur vom aktuellen Projekt."""
@@ -110,7 +125,7 @@ def log(limit: int = 10, project: Optional[str] = None, cwd: Optional[str] = Non
     return {"project": name, "entries": entries}
 
 
-@mcp.tool(annotations=READ)
+@tool(READ)
 def summary(period: str = "week", project: Optional[str] = None, cwd: Optional[str] = None,
             all_projects: bool = True) -> dict:
     """Summe der erfassten Aktivzeit je Projekt. period: today, week (ab Montag), month oder all."""
@@ -120,7 +135,7 @@ def summary(period: str = "week", project: Optional[str] = None, cwd: Optional[s
             "by_project": [{**b, "time": core.fmt_min(b["minutes"])} for b in s["by_project"]]}
 
 
-@mcp.tool(annotations=READ)
+@tool(READ)
 def projects() -> dict:
     """Alle angelegten Projekte und offene Sessions."""
     snap = core.snapshot()
