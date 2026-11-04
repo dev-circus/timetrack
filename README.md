@@ -1,99 +1,58 @@
 # timetrack
 
-Terminal-based time tracker with Git integration. Track working hours across multiple projects directly in the terminal — no browser, no account, no cloud.
+Projektbezogene Zeiterfassung im Terminal. Ein gemeinsamer Core (State + Log), darauf drei Frontends:
 
-```
-┌─ PROJECTS ──────────────┬─ SESSION · myproject ──────────────────────────────┐
-│ ● myproject   00:23:14  │ ──────────────────────────────────────────────────  │
-│ ○ website               │ ●  RUNNING                                          │
-│ ○ design                │ ──────────────────────────────────────────────────  │
-│                         │                                                     │
-│                         │ Project    myproject                                │
-│                         │ Repo       timetrack  (main)                       │
-│                         │                                                     │
-│                         │ Active     00:23:14                                 │
-│                         │ Total      00:23:14                                 │
-├─────────────────────────┴─────────────────────────────────────────────────────┤
-│ [n] New  [s] Start  [p] Pause  [r] Resume  [e] End  [l] Log  [q] Quit        │
-└───────────────────────────────────────────────────────────────────────────────┘
-```
+- **TUI** im Norton-Commander-Look (`timetrack`)
+- **CLI** (`timetrack start|pause|resume|stop|status|log|summary|projects|migrate`)
+- **MCP-Server** für Claude (`timetrack-mcp`)
 
-## Features
+Das Projekt wird aus dem Git-Repo des Arbeitsverzeichnisses erkannt. Sessions überleben das Schließen
+des Terminals: Die TUI zeigt live, was per CLI oder Claude gestartet wurde.
 
-- **Multi-project** — manage multiple projects side by side
-- **Pause & resume** — tracks active time separately from total elapsed time
-- **Auto-pause** — switching to another project pauses the active one automatically
-- **Git integration** — detects current repo and branch on project creation
-- **Log manager** — view, navigate, and delete past sessions
-- **Local only** — all data stays on your machine, saved as CSV
-
-## Tech Stack
-
-- **Python 3.7+**
-- **[rich](https://github.com/Textualize/rich)** — terminal UI (panels, tables, live rendering)
-- **CSV** — session log at `~/timetrack/log.csv`
-- No database, no network, no dependencies beyond `rich`
-
-## Installation
+## Setup
 
 ```bash
-# 1. Clone the repo
-git clone https://github.com/dev-circus/timetrack.git
-cd timetrack
-
-# 2. Install dependency
-pip install rich
-
-# 3. Run
-python3 timetrack.py
+brew install uv
+uv tool install /Users/patrick/Dev/timetrack   # legt timetrack und timetrack-mcp in ~/.local/bin ab
+timetrack migrate --dry-run                      # alte Logs prüfen, dann ohne --dry-run
 ```
 
-**Optional — add to PATH for global access:**
+## TUI
+
+`n` neues Projekt · `s`/`↵` Start · `p` Pause · `r` Resume · `e` Ende (mit Notiz) · `l` Log-Manager · `x` Projekt entfernen · `q` Quit
+
+Im Log-Manager: `↑↓` bewegen, `d` löschen (Bestätigung mit `y`).
+
+## Claude (MCP)
 
 ```bash
-cp timetrack.py ~/bin/timetrack
-chmod +x ~/bin/timetrack
+claude mcp add --scope user timetrack -- /Users/patrick/.local/bin/timetrack-mcp
 ```
 
-Then run from anywhere:
+Tools: `status`, `start`, `pause`, `resume`, `stop` (mit `note` und nachträglichem `at`), `log`, `summary`, `projects`.
+Claude startet und stoppt die Zeit nur auf Zuruf. Das Arbeitsverzeichnis wird als `cwd` übergeben.
+
+## Daten
+
+Standard: `~/.timetrack/` (überschreibbar mit `TIMETRACK_HOME`).
+
+| Datei | Inhalt |
+|---|---|
+| `state.json` | Projekte und offene Sessions (flock + atomarer Write) |
+| `log.csv` | `date,project,repo,branch,start,end,duration_min,note,paused_min` |
+
+`duration_min` ist die **Aktivzeit ohne Pausen**, `paused_min` die Pausenzeit. Einträge vor v0.1 haben keine
+Pausenangabe und enthalten die Bruttozeit.
+
+## Entwicklung
 
 ```bash
-timetrack
+uv sync
+uv run pytest
 ```
 
-> Requires macOS or Linux. Uses `tty` and `termios` for raw terminal input.
+`legacy/timetrack-v3.py` ist die alte Einzeldatei-Version (nur Archiv).
 
-## Usage
+---
 
-On first launch, timetrack prompts you to add a project. It auto-detects the current Git repo and branch — accept or override manually.
-
-### Controls
-
-| Key | Action |
-|-----|--------|
-| `↑` `↓` | Navigate project list |
-| `n` | Add new project |
-| `s` | Start tracking |
-| `p` | Pause |
-| `r` | Resume |
-| `e` | End session & save |
-| `l` | Open log manager |
-| `q` | Quit |
-
-### Log Manager (`l`)
-
-Opens a full-screen view of all recorded sessions. Navigate with `↑` `↓`, press `d` to delete the selected entry (with confirmation prompt), `q` to go back.
-
-## Log Format
-
-Sessions are saved to `~/timetrack/log.csv`:
-
-```
-date, project, repo, branch, start, end, duration_min, note
-```
-
-Open in Excel, Numbers, or any CSV viewer to analyze your tracked time.
-
-## License
-
-MIT — © 2026 Patrick B. Stang — dev_circus · [www.dev-circus.com](https://www.dev-circus.com)
+© 2026 dev_circus · www.dev-circus.com · by Patrick B. Stang
