@@ -1,6 +1,6 @@
 """timetrack CLI – Subcommands auf dem gemeinsamen Core. Ohne Argument startet die TUI.
 
-© 2026 dev_circus · www.dev-circus.com · by Patrick B. Stang
+© 2026 >devcircus_ · www.dev-circus.com · by Patrick B. Stang
 """
 
 from __future__ import annotations

@@ -3,7 +3,7 @@
 Alle Frontends (CLI, TUI, MCP-Server) laufen über dieses Modul.
 State liegt in state.json (flock + atomarer Write), das Log in log.csv.
 
-© 2026 dev_circus · www.dev-circus.com · by Patrick B. Stang
+© 2026 >devcircus_ · www.dev-circus.com · by Patrick B. Stang
 """
 
 from __future__ import annotations
