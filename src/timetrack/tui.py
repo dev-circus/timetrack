@@ -3,7 +3,7 @@
 Die TUI hält keinen eigenen State: Sessions liegen in state.json und sind live sichtbar,
 auch wenn sie von CLI oder Claude (MCP) gestartet wurden. Beenden der TUI stoppt nichts.
 
-© 2026 dev_circus · www.dev-circus.com · by Patrick B. Stang
+© 2026 >devcircus_ · www.dev-circus.com · by Patrick B. Stang
 """
 
 from __future__ import annotations

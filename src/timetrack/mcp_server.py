@@ -3,7 +3,7 @@
 Das Projekt wird aus dem Git-Repo des Arbeitsverzeichnisses erkannt, sonst aus dem Ordnernamen
 (cwd des Servers, überschreibbar per `cwd`/`project`). State und Log teilt sich der Server mit CLI und TUI.
 
-© 2026 dev_circus · www.dev-circus.com · by Patrick B. Stang
+© 2026 >devcircus_ · www.dev-circus.com · by Patrick B. Stang
 """
 
 from __future__ import annotations

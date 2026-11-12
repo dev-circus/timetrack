@@ -77,4 +77,4 @@ uv run pytest
 
 ## License
 
-MIT — © 2026 dev_circus · [www.dev-circus.com](https://www.dev-circus.com) · by Patrick B. Stang
+MIT — © 2026 >devcircus_ · [www.dev-circus.com](https://www.dev-circus.com) · by Patrick B. Stang
